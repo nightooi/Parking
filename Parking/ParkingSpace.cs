@@ -1,5 +1,23 @@
 ﻿public class ParkingSpace : IParkingSpace
 {
+    //copy constructor
+    public ParkingSpace(ParkingSpace space)
+    {
+        space._uId = this._uId;
+        space._Previous = this._Previous;
+        space._occupied = this._occupied;
+    }
+    //base init
+    public ParkingSpace(string row, int numb)
+    {
+       this._occupied = Occupied.Free;
+       this._uId = row + numb.ToString();
+    }
+    //Inline definition
+    public ParkingSpace(string row, int numb, Occupied occupied) : this(row, numb) 
+    {
+        this._occupied = occupied;
+    }
     private Occupied _Previous;
     private Occupied _occupied;
     private string _uId;
@@ -60,6 +78,7 @@
                             " {1}", value.ToString(), _occupied.ToString()));
                     }
                     break;
+
                 case Occupied.Free:
                     if(value != Occupied.Free) _occupied = value;
                     else throw new Exception(
