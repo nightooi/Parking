@@ -1,4 +1,6 @@
-﻿public interface IParkingRow
+﻿using System.Security.Cryptography;
+
+public interface IParkingRow
 {
     protected string RowEnumeration { get; }
     //0 iterated counted from left to right

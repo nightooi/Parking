@@ -1,4 +1,4 @@
-﻿public interface CardPayment : IPaymentType
+﻿public interface ICardPayment : IPaymentType
 {
     public enum TerminalResult { Denied, Approved, Fault }
     TerminalResult PaymentTerminal();
