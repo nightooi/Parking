@@ -1,6 +1,8 @@
-﻿public interface IParkingTimer
+﻿using System.Security.Cryptography.X509Certificates;
+
+public interface IParkingTimer
 {
-    Timer Timer { get; }
-    Timer TimerStart();
-    Timer ElpsedTime();
+    void TimerStart();
+    TimeSpan ElpsedTime();
+    TimeSpan Stop();
 }

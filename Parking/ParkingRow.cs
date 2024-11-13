@@ -1,4 +1,6 @@
 ﻿
+using System.Transactions;
+
 /// <summary>
 /// HasOpposing will be inferred from rowEnumeration 
 /// based off of the config
@@ -12,7 +14,7 @@ public class ParkingRow : IParkingRow
     /// <param name="rownum"></param>
     /// <param name="totalSpaces"></param>
     /// <param name="rowEnum"></param>
-    public ParkingRow(bool hasOpposing, int rownum, int totalSpaces, string rowEnum)
+    public ParkingRow(bool hasOpposing, int rownum, int totalSpaces, string rowEnum, int opposingRow)
     {
         this._hasOpposing = hasOpposing;
         this._row = rownum;
@@ -22,18 +24,19 @@ public class ParkingRow : IParkingRow
         this.parkingSpace = ConstructRow();
     }
     private bool _hasOpposing;
-    private int _row, _totalSpaces, it; //total spaces defines how long the row is, maxvalue of It(iterator) = _totalSpaces-1;
+    private readonly int _row, _totalSpaces, it, _opposingRow; //total spaces defines how long the row is, maxvalue of It(iterator) = _totalSpaces-1;
     private string _rowEnumeration;
 
     private readonly IParkingSpace[] parkingSpace;
     string IParkingRow.RowEnumeration => _rowEnumeration;
     public bool HasOpposing => _hasOpposing;
-    public int Row => _row;
+    public int RowNumber => _row;
     public int TotalSpaces => _totalSpaces;
+    public int OpposingRow { get => _opposingRow; }
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="position"></param>
+    /// <param name="position">Used as iterator into array, 0 iterated max = TotalSpaces-1</param>
     /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException">Throws if position is greater than the total len of the array.
     /// size is dictaged by config for current row</exception>

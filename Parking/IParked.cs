@@ -1,9 +1,18 @@
-﻿public interface IParked
+﻿using System.Globalization;
+
+public interface IParked
 {
-    IOwner Owner { get; set; }
-    IRegistrationNumber Registration { get; set; }
-    ITimer Timer { get; }
+    string ParkingUId { get; }
+    IOwner Owner { get; }
+    IRegistrationNumber Registration { get; }
     void StarParking();
-    IParked StartParking();
-    ITimer EndParking();
+    TimeSpan EndParking();
+}
+
+public static class TimerFactorySingleton
+{
+    public static IParkingTimer Create()
+    {
+        return new ParkingTimer();
+    }
 }
