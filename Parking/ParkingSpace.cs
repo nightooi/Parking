@@ -1,4 +1,6 @@
-﻿public class ParkingSpace : IParkingSpace
+﻿using System.Text.Json.Serialization;
+
+public class ParkingSpace : IParkingSpace
 {
     //copy constructor
     public ParkingSpace(ParkingSpace space)
