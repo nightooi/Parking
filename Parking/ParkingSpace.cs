@@ -5,9 +5,9 @@ public class ParkingSpace : IParkingSpace
     //copy constructor
     public ParkingSpace(ParkingSpace space)
     {
-        space._uId = this._uId;
-        space._Previous = this._Previous;
-        space._occupied = this._occupied;
+        this._uId = space._uId;
+        this._Previous = space._Previous;
+        this._occupied = space._occupied;
     }
     //base init
     public ParkingSpace(string row, int numb)
@@ -24,7 +24,7 @@ public class ParkingSpace : IParkingSpace
     private Occupied _occupied;
     private string _uId;
     public string UId => _uId;
-    //Statefull property... :)
+
     public Occupied Status { 
         get {
             return _occupied;
