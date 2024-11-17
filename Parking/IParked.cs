@@ -9,10 +9,4 @@ public interface IParked
     TimeSpan EndParking();
 }
 
-public static class TimerFactorySingleton
-{
-    public static IParkingTimer Create()
-    {
-        return new ParkingTimer();
-    }
-}
+

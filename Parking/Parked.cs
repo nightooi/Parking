@@ -7,6 +7,8 @@
 // Second approach is to create the que and have it be a ambient 
 // context to a factory method returning Parked objects
 //
+using Parking.SingleTons;
+
 public class Parked : IParked
 {
     private string _parkingUId;

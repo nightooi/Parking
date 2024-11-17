@@ -11,8 +11,8 @@ public interface IParkManagerEngine
     IResultMessage HasSpace();
     //shows that there is no space.
     IResultMessage NoSpace();
-    IResultMessage RequestPark(object data);
-    IResultMessage RequestCheckout(object data);
+    IResultMessage RequestPark(IParkingRequest request);
+    IResultMessage RequestCheckout(ICheckoutRequest request);
 }
 public interface IResultMessage
 {

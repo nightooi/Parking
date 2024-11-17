@@ -1,142 +1,148 @@
 ﻿using Microsoft.Win32.SafeHandles;
 
-public partial class ParkingRow
+namespace Parking.Config;
+
+public partial class RowFactory
 {
-    public partial class RowFactory
+    /// <summary>
+    /// Config output type needs to be a simple POCO type, nested types unsupported for now
+    /// </summary>
+    /// <typeparam name="T">Output Type</typeparam>
+    public abstract class FileConfig<T> : IConfig<T> 
     {
-        /// <summary>
-        /// Config output type needs to be a simple POCO type, nested types unsupported for now
-        /// </summary>
-        /// <typeparam name="T">Output Type</typeparam>
-        /// <typeparam name="U">Incoming type</typeparam>
-        public abstract class Config<T> : IConfig<T> 
+        public FileConfig(int cacheSize, T value)
         {
-            public Config(int cacheSize, T value)
-            {
-                Value = value;
-            }
-            public string[] UnParsed { get; set; }
-            static List<string> Cache = new List<string>();
-            T Value;
+            Value = value;
+        }
+        public string[] UnParsed { get; set; }
+        static List<string> Cache = new List<string>();
+        T Value;
 
-            /// <summary>
-            /// Register Parsing method for member of type
-            /// </summary>
-            /// <param name="name">property name</param>
-            /// <param name="Parse">value as string, returns T type, Sends in T ref to update</param>
-            /// <returns></returns>
-            public static bool RegisterMemberParserMethod(string name, Func<string, T, T> Parse)
+        /// <summary>
+        /// Register Parsing method for member of type
+        /// </summary>
+        /// <param name="name">property name</param>
+        /// <param name="Parse">value as string, returns T type, Sends in T ref to update</param>
+        /// <returns></returns>
+        public static bool RegisterMemberParserMethod(string name, Func<string, T, T> Parse)
+        {
+            return IConfig<T>.Parsers.TryAdd(name, Parse);
+        }
+        public T GetValues()
+        {
+            if (Cache.Count() == 0)
             {
-                return IConfig<T>.Parsers.TryAdd(name, Parse);
-            }
-            public T GetValues()
-            {
-                if (Cache.Count() == 0)
-                {
-                    var res = Environment.GetFolderPath(
-                    Environment.SpecialFolder.LocalApplicationData,
-                    Environment.SpecialFolderOption.Create);
-                    SafeFileHandle handle = new();
-                    ReadHandle(res);
-                }
-                return Value;
-            }
-            private T? CacheConverter()
-            {
-                int start = Array.FindIndex(Cache.ToArray(),
-                    x => x.StartsWith(IConfig<T>.SectionDenoter)
-                    && x.Equals(IConfig<T>.SectionDenoter + typeof(T).Name));
+                var res = Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData,
+                Environment.SpecialFolderOption.Create);
+                SafeFileHandle handle = new();
 
-                int End = Array.FindIndex(Cache.ToArray(), start + 1,
-                    x => x.StartsWith(IConfig<T>.SectionDenoter));
-                int? collection = 0;
-                int? collectionS;
-                Func<string, T, T>? collectionParser;
-                for (int i = start; i < End; i++)
-                {
-                    var res = FindParser(Cache[i], out collection);
-                    if(collection >0)
-                    {
-                        collectionS = i;
-                        collectionParser = res;
-                        continue;
-                    }
-                    return res(RemoveDenoters(Cache[i], false), Value);
-                }
-                return Value;
+                ReadHandle(res);
             }
-            //this should all just be a single RegeX, alas...
-            private Func<string, T, T> FindParser(string line, out int? collection)
+            return Value;
+        }
+        private T? CacheConverter()
+        {
+            int start = Array.FindIndex(Cache.ToArray(),
+                x => x.StartsWith(IConfig<T>.SectionDenoter)
+                && x.Equals(IConfig<T>.SectionDenoter + typeof(T).Name));
+
+            int End = Array.FindIndex(Cache.ToArray(), start + 1,
+                x => x.StartsWith(IConfig<T>.SectionDenoter));
+            int? collectionS = 0;
+            Func<string, T, T>? collectionParser = null;
+            for (int i = start; i < End; i++)
             {
-                Func<string, T, T>? parser;
-                string paramName = "";
-                for (int k = 0; k < Parsers.Count(); k++)
+                if(collectionParser is not null
+                   &&  collectionS > 0) 
                 {
-                    string registeredParsers = Parsers.Keys.ToList()[k];
-                    var res = ParseDenoters(line,
-                        registeredParsers,
-                        out collection);
-                    return res;
+                    string val = RemoveDenoters(Cache[i], (collectionS > 0));
+                    collectionParser(val, Value);
+                    collectionS--;
+                    continue;
                 }
-                collection = 0;
-                return null;
+                var res = FindParser(Cache[i], out collectionS);
+                if(collectionS > 0)
+                {
+                    collectionS += i +1;
+                    collectionParser = res;
+                    continue;
+                }
+                res(RemoveDenoters(Cache[i], false), Value);
             }
-            public Func<string, T, T>? ParseDenoters(string Denoter,
-                string registeredParsers,
-                out int? collectionLen)
+            return Value;
+        }
+        //this should all just be a single RegeX, alas...
+        private Func<string, T, T> FindParser(string line, out int? collection)
+        {
+            Func<string, T, T>? parser;
+            string paramName = "";
+            for (int k = 0; k < IConfig<T>.Parsers.Count(); k++)
             {
-                if (Denoter.Contains(registeredParsers)
-                && !Denoter.Contains(IConfig<T>.CollectionDenote))
-                {
-                    string parsername = Denoter.Remove(0,
-                    IConfig<T>.PropertyDenoter.Length);
-                    collectionLen = 0;
-                    return  Parsers[parsername];
-                }
-                else if(Denoter.Contains(
-                        registeredParsers
-                    + IConfig<T>.ValueStart
-                    + IConfig<T>.CollectionDenote))
-                {
-                    string result = Denoter.Remove(0,
-                        registeredParsers.Length
-                        + IConfig<T>.ValueStart.Length
-                        + IConfig<T>.CollectionDenote.Length
-                        + IConfig<T>.PropertyDenoter.Length);
-                    collectionLen = GetCollectionLen(result);
-                    return Parsers[registeredParsers];
-                }
+                string registeredParsers = IConfig<T>.Parsers.Keys.ToList()[k];
+                var res = ParseDenoters(line,
+                    registeredParsers,
+                    out collection);
+                return res;
+            }
+            collection = 0;
+            return null;
+        }
+        public Func<string, T, T>? ParseDenoters(string Denoter,
+            string registeredParsers,
+            out int? collectionLen)
+        {
+            if (Denoter.Contains(registeredParsers)
+            && !Denoter.Contains(IConfig<T>.CollectionDenote))
+            {
+                string parsername = Denoter.Remove(0,
+                IConfig<T>.PropertyDenoter.Length);
                 collectionLen = 0;
-                return null;
+                return  IConfig<T>.Parsers[parsername];
             }
-            private int GetCollectionLen(string collection)
+            else if(Denoter.Contains(
+                    registeredParsers
+                + IConfig<T>.ValueStart
+                + IConfig<T>.CollectionDenote))
             {
-                int res;
-                string parsed = (collection[3].ToString() + collection[4].ToString());
-                if(int.TryParse(parsed, out res))
+                string result = Denoter.Remove(0,
+                    registeredParsers.Length
+                    + IConfig<T>.ValueStart.Length
+                    + IConfig<T>.CollectionDenote.Length
+                    + IConfig<T>.PropertyDenoter.Length);
+                collectionLen = GetCollectionLen(result);
+                return IConfig<T>.Parsers[registeredParsers];
+            }
+            collectionLen = 0;
+            return null;
+        }
+        private int GetCollectionLen(string collection)
+        {
+            int res;
+            string parsed = (collection[3].ToString() + collection[4].ToString());
+            if(int.TryParse(parsed, out res))
+            {
+                return res;
+            }
+            throw new Exception("CONFIG HAS BEEN EXTERNALLY MODIFIED");
+        }
+        private void ReadHandle(string path)
+        {
+            using (StreamReader reader = new(path))
+            {
+                int i = 0;
+                while ((Cache[i] = reader.ReadLine()) is not null)
                 {
-                    return res;
-                }
-                throw new Exception("CONFIG HAS BEEN EXTERNALLY MODIFIED");
-            }
-            private void ReadHandle(string path)
-            {
-                using (StreamReader reader = new(path))
-                {
-                    int i = 0;
-                    while ((Cache[i] = reader.ReadLine()) is not null)
-                    {
-                        i++;
-                    }
+                    i++;
                 }
             }
-            private string RemoveDenoters(string val, bool collection)
-            {
-                if (collection)
-                    return val;
-                var res = val.IndexOf(IConfig<T>.ValueStart);
-                return val.Remove(0, res+1);
-            }
+        }
+        private string RemoveDenoters(string val, bool collection)
+        {
+            if (collection)
+                return val;
+            var res = val.IndexOf(IConfig<T>.ValueStart);
+            return val.Remove(0, res+1);
         }
     }
 }

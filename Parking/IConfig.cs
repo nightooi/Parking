@@ -1,4 +1,6 @@
-﻿namespace Parking.Config;
+﻿using System.Security.Cryptography.X509Certificates;
+
+namespace Parking.Config;
 public interface IConfig<T>
 {
      //Assumes single line of PropertyDenoterPropertyNameValueStartValue
@@ -16,7 +18,7 @@ public interface IConfig<T>
      //each individual piece of data sits on line and will iterativly be sent to
      //the translate function registered for the type.
      public readonly static  string CollectionDenote = PropertyDenoter + "###";
-     public T? GetValues();
+     public T GetValues();
      public static Dictionary<string, Func<string, T, T>> Parsers { get; }
      public static bool RegisterMemberParserMethod(
      string memberName,

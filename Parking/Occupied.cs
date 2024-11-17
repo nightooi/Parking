@@ -1,1 +1,2 @@
-﻿public enum Occupied { Free, Half, Full}
+﻿[Flags]
+public enum Occupied { Full, Half, Free}

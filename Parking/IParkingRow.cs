@@ -6,12 +6,18 @@ using System.Security.Cryptography;
 public interface IParkingRow : IReadOnlyCollection<IParkingSpace>
 {
     protected string RowEnumeration { get; }
-    //0 iterated counted from left to right
     bool HasOpposing { get; }
     int RowNumber { get; }
     int OpposingRow { get; }
-    //0 Iterated
     int TotalSpaces { get; }
     public bool IsTaken(int position);
     public IParkingSpace GetParking(int position);
+    //syntax sugar
+    public IParkingSpace this[int i]
+    {
+        get
+        {
+            return GetParking(i);
+        }
+    }
 }

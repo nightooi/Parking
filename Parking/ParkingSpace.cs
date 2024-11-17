@@ -1,96 +1,42 @@
 ﻿using System.Text.Json.Serialization;
-
 public class ParkingSpace : IParkingSpace
 {
     //copy constructor
     public ParkingSpace(ParkingSpace space)
     {
         this._uId = space._uId;
-        this._Previous = space._Previous;
-        this._occupied = space._occupied;
+        this.Status = space.Status;
     }
     //base init
     public ParkingSpace(string row, int numb)
     {
-       this._occupied = Occupied.Free;
+        this.Status = Occupied.Free;
        this._uId = row + numb.ToString();
     }
     //Inline definition
     public ParkingSpace(string row, int numb, Occupied occupied) : this(row, numb) 
     {
-        this._occupied = occupied;
+        this.Status = occupied;
     }
-    private Occupied _Previous;
-    private Occupied _occupied;
     private string _uId;
     public string UId => _uId;
-
-    public Occupied Status { 
-        get {
-            return _occupied;
-        }
-        set
+    //confusion.... was cooked or fucking what? 
+    public Occupied Status { get; set; }
+    public int CompareTo(IParkingSpace? other)
+    {
+         ValueTuple<int, int> res;
+        ValueTuple<int, int> res1;
+        if(other is not null && this is not null)
         {
-            switch(_occupied)
+            res = UIDToPos.UIdToPos(this._uId);
+            res1 = UIDToPos.UIdToPos(other.UId);
+            if(res.Item1 - res1.Item1 == 0)
             {
-                case Occupied.Half:
-                    if (value == Occupied.Half) {
-                        _Previous = Occupied.Half;
-                        _occupied = Occupied.Full;
-                    }
-                    else if(value == Occupied.Free)
-                    {
-                        _Previous = _occupied;
-                        _occupied = Occupied.Free;
-                    }
-                    else
-                    {
-                        throw new Exception(
-                            string.Format(
-                            "Field Status::" +
-                            " is being Set to value::: {0} which is not" +
-                            " possible while the Property has the value" +
-                            " {1}", value.ToString(), _occupied.ToString()));
-                    }
-                    break;
-
-                case Occupied.Full:
-                    if(value == Occupied.Free && _Previous == Occupied.Half)
-                    {
-                        _Previous = _occupied;
-                        _occupied = Occupied.Half;
-                    }
-                    else if(value == Occupied.Free)
-                    {
-                        _Previous = _occupied;
-                        _occupied = Occupied.Free;
-                    }
-                    else if (value == Occupied.Half && _Previous == Occupied.Half)
-                    {
-                        _Previous = _occupied;
-                        _occupied = Occupied.Full;
-                    }
-                    else
-                    {
-                        throw new Exception(
-                            string.Format(
-                            "Field Status::" +
-                            " is being Set to value::: {0} which is not" +
-                            " possible while the Property has the value" +
-                            " {1}", value.ToString(), _occupied.ToString()));
-                    }
-                    break;
-
-                case Occupied.Free:
-                    if(value != Occupied.Free) _occupied = value;
-                    else throw new Exception(
-                            string.Format(
-                            "Field Status::" +
-                            " is being Set to value::: {0} which is not" +
-                            " possible while the Property has the value" +
-                            " {1}", value.ToString(), _occupied.ToString()));
-                    break;
+                return res.Item2 - res1.Item2;
             }
+            return res.Item1 - res.Item2;
         }
+        return this.UId.CompareTo(other.UId);
+
     }
 }

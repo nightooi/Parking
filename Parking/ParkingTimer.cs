@@ -1,4 +1,4 @@
-﻿public class ParkingTimer : IParkingTimer
+﻿public struct ParkingTimer : IParkingTimer
 {
     private DateTime start;
     public TimeSpan ElpsedTime()
