@@ -2,7 +2,7 @@
 {
     IRenderer Render { get; }
     IList<IViewModel> Models { get; }
-    string[] MessageQue { get; }
+    IResultMessage[] MessageQue { get; }
     IParkManagerEngine Engine { get; }
     public int Start();
 }

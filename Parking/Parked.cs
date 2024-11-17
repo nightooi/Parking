@@ -32,6 +32,12 @@ public class Parked : IParked
         if (parkingTimer is null) return new TimeSpan(0, 0, 0);
         return parkingTimer.Stop();
     }
+
+    public TimeSpan ElapsedTime()
+    {
+        return this.parkingTimer.ElpsedTime();
+    }
+
     public Parked(
         IParkingTimer timer,
         IParkingSpace space,

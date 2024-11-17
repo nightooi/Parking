@@ -7,6 +7,7 @@ public interface IParked
     IRegistrationNumber Registration { get; }
     void StarParking();
     TimeSpan EndParking();
+    TimeSpan ElapsedTime();
 }
 
 
