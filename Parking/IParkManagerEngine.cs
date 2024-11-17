@@ -132,12 +132,53 @@ public interface IRecoverHash
     IOwner Ownder { get; set; }
 }
 
+public class RecoverHash : IRecoverHash
+{
+    public TimeOnly ParkStart { get; set; }
+    public IOwner Ownder { get; set; }
+
+    RecoverHash(TimeOnly start, IOwner owner)
+    {
+        Ownder = owner;
+    }
+}
 public interface IResultMessage
 {
     string Type { get; }
     object Item { get; }
     object Subtype(string item);
 }
+public abstract class  Message : IResultMessage
+{
+    string _messageType;
+    public string Type => _messageType;
+
+    object _resultObject;
+    public object Item => _resultObject;
+
+    public object Subtype(string item)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+public class RegistrationMessage : Message
+{
+
+}
+public class EndParkingMessage : Message
+{
+
+}
 public interface IResultGenerator : IFactory<IResultMessage>
 {
+}
+
+public class ResultGenerator : IResultGenerator
+{
+    public object[] parameters => throw new NotImplementedException();
+
+    public Func<object[], IResultMessage> Imp => throw new NotImplementedException();
+
+
 }
