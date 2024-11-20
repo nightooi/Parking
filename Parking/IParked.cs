@@ -2,9 +2,9 @@
 
 public interface IParked
 {
+    IVehicle Vehicle { get; }
     string ParkingUId { get; }
-    IOwner Owner { get; }
-    IRegistrationNumber Registration { get; }
+    string Registration { get; }
     void StarParking();
     TimeSpan EndParking();
     TimeSpan ElapsedTime();

@@ -2,7 +2,7 @@
 
 public static class VehicleFactory
 {
-    public static Vehicle Create(VehicleSize size, IRegistrationNumber number, Color color){
+    public static Vehicle Create(VehicleSize size, string number, ConsoleColor color){
         return size switch
         {
             VehicleSize.large => new Buss(number, color),

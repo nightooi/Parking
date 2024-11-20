@@ -14,7 +14,7 @@ public sealed class Sedan : Vehicle
             _size = value;
         }
     }
-    public Sedan(IRegistrationNumber registration,  Color color) : base(registration, VehicleSize.normal, color)
+    public Sedan(string registration,  ConsoleColor color) : base(registration, VehicleSize.normal, color)
     {
 
     }

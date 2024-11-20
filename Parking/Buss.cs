@@ -14,7 +14,7 @@ public class Buss : Vehicle
             _size = value;
         }
     }
-    public Buss(IRegistrationNumber registration, Color color) : base(registration, VehicleSize.large, color)
+    public Buss(string registration, ConsoleColor color) : base(registration, VehicleSize.large, color)
     {
 
     }

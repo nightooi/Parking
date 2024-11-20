@@ -21,18 +21,20 @@ public class ParkingRow : IParkingRow
         int totalSpaces,
         string rowEnum,
         int? opposingRow,
+        int count,
          ISimpleFactory<IFactory<IEnumerable<IParkingSpace>>,
             IEnumerable<IParkingSpace>> spacefactory)
     {
         this._hasOpposing = hasOpposing;
         this._row = rownum;
-        this._totalSpaces = totalSpaces;
+        this._totalSpaces = count;
         this._rowEnumeration = rowEnum;
-        this.it = totalSpaces - 1;
         this.parkingSpace = spacefactory.Create().ToArray();
+        _opposingRow = opposingRow ?? -1;
+        
     }
     private bool _hasOpposing;
-    private readonly int _row, _totalSpaces, it, _opposingRow; //total spaces defines how long the row is, maxvalue of It(iterator) = _totalSpaces-1;
+    private readonly int _row, _totalSpaces,_opposingRow; //total spaces defines how long the row is, maxvalue of It(iterator) = _totalSpaces-1;
     private string _rowEnumeration;
 
     private readonly IParkingSpace[] parkingSpace;

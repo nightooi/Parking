@@ -11,13 +11,13 @@ using Parking.SingleTons;
 
 public class Parked : IParked
 {
+    private IVehicle _vehicle;
+    public IVehicle Vehicle => _vehicle;
     private string _parkingUId;
-    private IOwner _owner;
-    private IRegistrationNumber registration;
+    private string registration;
     private IParkingTimer? parkingTimer { get; set; }
     public string ParkingUId => _parkingUId;
-    public IOwner Owner { get => _owner; }
-    public IRegistrationNumber Registration { get => registration; }
+    public string Registration { get => registration; }
     public void StarParking()
     {
         if(parkingTimer is null)
@@ -32,21 +32,47 @@ public class Parked : IParked
         if (parkingTimer is null) return new TimeSpan(0, 0, 0);
         return parkingTimer.Stop();
     }
-
     public TimeSpan ElapsedTime()
     {
-        return this.parkingTimer.ElpsedTime();
+       
+        return this.parkingTimer.ElpsedTime().Duration();
     }
-
     public Parked(
         IParkingTimer timer,
         IParkingSpace space,
-        IRegistrationNumber reg,
-        IOwner owner)
+        string reg,
+        IVehicle v)
     {
         this.parkingTimer = timer;
         this._parkingUId = space.UId;
         this.registration = reg;
-        this._owner = owner;
+        this._vehicle = v;
+        this.PosPerType();
+    }
+    private string _pos;
+    private string printPos => _pos;
+    private void PosPerType()
+    {
+        if (this.Vehicle is Buss)
+        {
+            var res = UIDToPos.UIdToPos(this.ParkingUId);
+            res.Item1++;
+            _pos = new string([(char)res.Item1, (char)res.Item2]);
+        }
+    }
+    public override string ToString()
+    {
+        
+        return this.registration + " ::: "
+            + this.ElapsedTime().Seconds + " ::: "
+            + _pos + " :: " + Vehicle.GetType();
+    }
+}
+public static class ParkedFactorySingleTon
+{
+    public static IParked Create(string reg, IParkingSpace space, IVehicle vehicle)
+    {
+        var timer = TimerFactorySingleton.Create();
+        return new Parked(timer, space, reg, vehicle);
     }
 }

@@ -3,19 +3,18 @@
     private DateTime start;
     public TimeSpan ElpsedTime()
     {
-        return DateTime.Now - start;
+        return DateTime.Now.Subtract(start);
     }
     public TimeSpan Stop()
     {
-        start = new DateTime();
         return ElpsedTime();
     }
     public void TimerStart()
     {
-        start = DateTime.Now;
+        this.start = DateTime.Now;
     }
     public ParkingTimer()
     {
-        start = new DateTime();
+        this.start = DateTime.Now;
     }
 }

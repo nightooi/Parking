@@ -14,7 +14,7 @@ public class Bike : Vehicle
             _size = value;
         }
     }
-    public Bike(IRegistrationNumber registration, Color color) : base(registration, VehicleSize.small, color)
+    public Bike(string registration, ConsoleColor color) : base(registration, VehicleSize.small, color)
     {
 
     }
