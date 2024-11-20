@@ -44,7 +44,15 @@ namespace Parking
                 {
                     Remove(); 
                 }
-                Helpers.PrintRows(Config.RowAmount,Config.RowAmount);
+                else if(info.Key == ConsoleKey.F)
+                {
+                    if(Parked.Count > 0)
+                    {
+                        var res = this.Parked[random.Next(0, this.Parked.Count)];
+                        Remove(res);
+                    }
+                }
+                Helpers.PrintRows(Config.ParkPerRow,Config.RowAmount);
                 ShowParked();
                 Helpers.StandardWrite(
                     "Press [a] to exit or [e] to" +
@@ -60,24 +68,32 @@ namespace Parking
             GetPaid(res);
             ClearOutput();
             FreeParking(res);
+            Helpers.RemoveBike(res);
+       }
+       private void Remove(IParked parked)
+       {
+            GetPaid(parked);
+            ClearOutput();
+            FreeParking(parked);
+            Helpers.RemoveBike(parked);
        }
        public void ClearOutput()
        {
             int y = 5;
-            int x = 75;
+            int x = 5+Config.XOutOffset;
             foreach(var item in Parked)
             {
-                if (y < 20)
+                if (y < Config.YOffSet)
                 {
                     y += 1;
                 }
                 else
                 {
                     y = 5;
-                    x += 30;
+                    x += 32;
                 }
                 Helpers.ClearLastOutPut(x, y, Helpers.SetOutPuts(item));
-                Thread.Sleep(200);
+                Thread.Sleep(5);
             }
        }
        private void FreeParking(IParked parked)
@@ -200,17 +216,18 @@ namespace Parking
        private void ShowParked()
        {
             int y = 5;
-            int x = 75;
+            int x = 5+(Config.XOutOffset);
+
             foreach(var item in Parked)
             {
-                if (y < 20)
+                if (y < Config.YOffSet)
                 {
                     y += 1;
                 }
                 else
                 {
                     y = 5;
-                    x += 30;
+                    x += 32;
                 }
                 Helpers.SetOut(Helpers.SetOutPuts(item), x, y, item.Vehicle.Color);
                 if(item.Vehicle.Size != VehicleSize.small)
@@ -555,15 +572,21 @@ private T ParseTrans<T>(
                 {
                     parkingRows[k] =
                     new ParkingRow(true, k, ((int)o[1]), ((string)o[0]).ToUpper()[k].ToString(),
-                    ((k%2==0) ? (((k + 1 <= parkingRows.Length-1) ? k+1 : -1)) : -1) ,Config.RowAmount,
-                       (s[k] = new SpaceFact(new SpaceFactImp(Config.RowAmount, ((string)o[0]).ToUpper()[k].ToString()))));
+                    ((k%2==0) ? (((k + 1 <= parkingRows.Length-1) ? k+1 : -1)) : -1) ,
+                    Config.RowAmount,
+                       (s[k] = new SpaceFact(
+                           new SpaceFactImp(
+                               (int)o[1],
+                               ((string)o[0])
+                               .ToUpper()[k]
+                               .ToString()))));
                 }
                 return parkingRows;
             };
         }
         private object[] CreateParams()
         {
-            return ["abcdefghijk", Config.RowAmount, true];
+            return ["abcdefghijklmnopqrstuvwxyz", Config.ParkPerRow, true];
         }
     }
 
@@ -592,7 +615,7 @@ private T ParseTrans<T>(
 
             _imp = (o) =>
             {
-                ParkingSpace[] spaces = new ParkingSpace[Config.RowAmount];
+                ParkingSpace[] spaces = new ParkingSpace[(int)(o[0])];
                 for(int i = 0; i < (int)(o[0]); i++)
                 {
                     spaces[i] = new((string)(o[1]), i);

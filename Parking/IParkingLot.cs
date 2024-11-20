@@ -114,12 +114,16 @@ internal class Parkinglot : IParkingLot
     {
         IParkingSpace space;
         IParkingSpace oppSpace;
-        if((space = NextSpotLarge.Peek()).Status == Occupied.Free
-            && (oppSpace = GetOpposing(space)).Status == Occupied.Free)
+        if ((space = NextSpotLarge.Peek()).Status != Occupied.Free
+            || (oppSpace = GetOpposing(space)).Status != Occupied.Free)
         {
-
+            NextSpotLarge.Pop();
+        }
+        else if(NextSpotLarge.Peek().Status == Occupied.Free 
+            && GetOpposing(space).Status == Occupied.Free)
+        {
+            GetOpposing(space = NextSpotLarge.Peek()).Status = Occupied.Full;
             space.Status = Occupied.Full;
-            oppSpace.Status = Occupied.Full;
             CheckAvailibilit();
             return space;
         }
@@ -367,6 +371,8 @@ public static class UIDToPos
     {   
         //unclear why but this throws sometimes, seemingly randomly
         //the only way this happens is if for some reason the UID string is malformed
+        //if this throws, your guess is as good as mine at this point..
+
         try
         {
 

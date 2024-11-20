@@ -10,7 +10,10 @@ namespace Parking
 {
     internal static class Config
     {
-        public static int RowAmount { get; set; } = 8;
+        public static int RowAmount { get; set; } = 7;
+        public static int ParkPerRow { get; set; } = 11;
+        public static int YOffSet => Config.RowAmount * 2 + Config.RowAmount;
+        public static int XOutOffset => Config.RowAmount / 2 * 17 + Config.RowAmount / 2 +5;
     }
 
     internal static class Helpers
@@ -35,6 +38,10 @@ namespace Parking
                 _clearQue = value;
             }
         }
+        public static void RemoveBike(IParked parked)
+        {
+            V.Remove(parked);
+        }
         public static void ClearQueMess((int, int, int) tups)
         {
             Console.BackgroundColor = ConsoleColor.Black;
@@ -49,9 +56,9 @@ namespace Parking
         }
         public static void ExceptionMessage(string message, ConsoleColor color)
         {
-            int y = 35;
-            ClearQue.Enqueue((110, y, message.Length));
+            int y = 10+Config.YOffSet;
             y += ClearQue.Count;
+            ClearQue.Enqueue((110, y, message.Length));
             Console.SetCursorPosition(110, y);
             Console.ForegroundColor = color;
             Console.WriteLine(message);
@@ -59,17 +66,17 @@ namespace Parking
         }
         public static void StandardWrite(string message, ConsoleColor color)
         {
-            Console.SetCursorPosition(110, 30);
+            Console.SetCursorPosition(110, Config.YOffSet+5);
             Console.Write("                                                               ");
-            Console.SetCursorPosition(110, 30);
+            Console.SetCursorPosition(110, Config.YOffSet+5);
             Console.Write(message);
         }
         public static string StandardIn(ConsoleColor color)
         {
-            Console.SetCursorPosition(120, 32);
+            Console.SetCursorPosition(120, Config.YOffSet+7);
             Console.ForegroundColor = color;
             string message = Console.ReadLine();
-            Helpers.ClearLastOutPut(120, 32, message);
+            Helpers.ClearLastOutPut(120, Config.YOffSet+7, message);
             return message.ToUpper();
         }
         public static void ClearLastOutPut(int x, int y, string output)
@@ -204,6 +211,7 @@ namespace Parking
         public static void SetOut(string message, int x, int y, ConsoleColor color)
         {
             Console.ForegroundColor = color;
+            
             Console.SetCursorPosition(x, y);
             Console.Write(message);
             Console.ForegroundColor = ConsoleColor.Gray;
