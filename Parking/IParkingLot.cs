@@ -67,7 +67,7 @@ internal class Parkinglot : IParkingLot
             VehicleSize.normal => HandleMedium(),
             VehicleSize.large => HandleLarge(),
             _ => throw new Exception()
-        }; 
+        };
     }
     private void SimpleSync()
     {

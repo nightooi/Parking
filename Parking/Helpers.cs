@@ -23,9 +23,9 @@ namespace Parking
                 if(_clearQue.Count > 5 )
                 {
                    foreach(var i in _clearQue.Reverse())
-                    {
-                        ClearQueMess(i);
-                    }
+                   {
+                       ClearQueMess(i);
+                   }
                     _clearQue.Clear();
                 }
                 return _clearQue;
@@ -49,11 +49,11 @@ namespace Parking
         }
         public static void ExceptionMessage(string message, ConsoleColor color)
         {
-            Console.ForegroundColor = color;
             int y = 35;
-            y += ClearQue.Count;
             ClearQue.Enqueue((110, y, message.Length));
+            y += ClearQue.Count;
             Console.SetCursorPosition(110, y);
+            Console.ForegroundColor = color;
             Console.WriteLine(message);
             Console.ForegroundColor = ConsoleColor.White;
         }
@@ -62,11 +62,6 @@ namespace Parking
             Console.SetCursorPosition(110, 30);
             Console.Write("                                                               ");
             Console.SetCursorPosition(110, 30);
-            Console.Write(message);
-        }
-        public static void ClearLastSMessage(string message)
-        {
-            Console.SetCursorPosition(110, 35);
             Console.Write(message);
         }
         public static string StandardIn(ConsoleColor color)
@@ -82,12 +77,7 @@ namespace Parking
             string clearLen = string.Empty;
             for (int i = output.Length; i > 0; i--) 
                 clearLen += " ";
-            Console.SetCursorPosition(x, y);
-            Console.Write(clearLen);
-        }
-        public static void Set() 
-        {
-
+            Helpers.SetOut(clearLen, x, y, ConsoleColor.Black);
         }
         public static void PrintRows(int len, int h)
         {
@@ -116,7 +106,7 @@ namespace Parking
                 Console.CursorTop++;
                 Console.CursorLeft -= 7;
         }
-        public static string  SetOutPuts(IParked vehicle)
+        public static string SetOutPuts(IParked vehicle)
         {
             if (vehicle.Vehicle.Size == VehicleSize.large)
             {

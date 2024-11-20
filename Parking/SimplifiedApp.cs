@@ -12,10 +12,10 @@ namespace Parking
        IList<IParked> Parked { get; set; }
        public SimplifiedApp()
        {
-            this.Parked = new List<IParked>();
-            ParkingLot = new Parkinglot(new SimpleParkingLotFactory(new ParkingRowFact()));
             Console.SetWindowSize(Console.LargestWindowWidth, Console.LargestWindowHeight);
-
+            this.Parked = new List<IParked>();
+            ParkingLot = (new ParkingLotFactory() 
+                as ISimpleFactory<IFactory<IParkingLot>, IParkingLot>).Create();
        }
        public void Start()
        {
@@ -53,7 +53,6 @@ namespace Parking
                 info = Console.ReadKey();
             }
        }
-
        private void Remove()
        {
             var res = GetRegRemove();
@@ -78,6 +77,7 @@ namespace Parking
                     x += 30;
                 }
                 Helpers.ClearLastOutPut(x, y, Helpers.SetOutPuts(item));
+                Thread.Sleep(200);
             }
        }
        private void FreeParking(IParked parked)
@@ -502,6 +502,30 @@ private T ParseTrans<T>(
        enum Register { Color, Registration, Size}
        enum Checkout { Registration }
     }
+    public class ParkingLotFactory : ISimpleFactory<IFactory<IParkingLot>, IParkingLot>
+    {
+        IFactory<IParkingLot> _factory;
+        public IFactory<IParkingLot> Factory => _factory;
+        public ParkingLotFactory()
+        {
+            _factory = new ParkingFactory();
+        }
+    }
+    public class ParkingFactory : IFactory<IParkingLot>
+    {
+        object[] _params;
+        public object[] parameters => _params;
+        Func<object[], IParkingLot> _imp;
+        public Func<object[], IParkingLot> Imp => _imp;
+        public ParkingFactory()
+        {
+            _imp = (o) =>
+            {
+                return new Parkinglot(new SimpleParkingLotFactory(new ParkingRowFact()));
+            };
+        }
+    }
+
     public class SimpleParkingLotFactory : ISimpleFactory<IFactory<IEnumerable<IParkingRow>>, IEnumerable<IParkingRow>>
     {
         IFactory<IEnumerable<IParkingRow>> _factory;
