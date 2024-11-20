@@ -224,10 +224,15 @@ internal class Parkinglot : IParkingLot
         {
             NextSpotSmall.Push(cache[i]);
         }
-        UpdateOther(NextSpotMedium, VehicleSize.normal);
-        UpdateOther(NextSpotLarge, VehicleSize.large);
+        UpdateOther(NextSpotMedium);
+        while(NextSpotLarge.Count > 0 && 
+            NextSpotLarge.Peek().Status != Occupied.Free
+            || GetOpposing(NextSpotLarge.Peek()).Status != Occupied.Free)
+        {
+            NextSpotLarge.Pop();
+        }
     }
-    private void UpdateOther(Stack<IParkingSpace> stack, VehicleSize size)
+    private void UpdateOther(Stack<IParkingSpace> stack)
     {
         while(stack.Count > 0 && 
             stack.Peek().Status != Occupied.Free)
