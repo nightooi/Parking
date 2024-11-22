@@ -14,15 +14,13 @@ namespace Parking
        {
             Console.SetWindowSize(Console.LargestWindowWidth, Console.LargestWindowHeight);
             this.Parked = new List<IParked>();
+            this.RunConfig();
             ParkingLot = (new ParkingLotFactory() 
                 as ISimpleFactory<IFactory<IParkingLot>, IParkingLot>).Create();
        }
        public void Start()
        {
-            Console.ReadKey();
-            Helpers.StandardWrite("Welcome To parkinglot", ConsoleColor.White);
-            Console.ReadKey();
-            ConsoleKeyInfo info = new();
+           ConsoleKeyInfo info = new();
             while(info.Key !=  ConsoleKey.A)
             {
                 if(info.Key == ConsoleKey.E)
@@ -61,6 +59,46 @@ namespace Parking
                 info = Console.ReadKey();
             }
        }
+       private void RunConfig()
+        {
+            Console.WriteLine("Set screen To max,tap any key once ready");
+            Console.ReadKey();
+            Console.Clear();
+            Helpers.SetOut("How many parking pows? default is 9, max 26",110, 21, ConsoleColor.White);
+            Helpers.SetOut("Press enter for default, else enter a number", 110, 22, ConsoleColor.White);
+            ParseInt((a) => { Config.RowAmount = a; }, 27);
+            Helpers.SetOut("How many Parkings Per row? rows are technically unlimited," +
+                " default is 11", 110, 20, ConsoleColor.White);
+            Helpers.SetOut("Press enter for default" +
+                ", else enter a number", 110, 21, ConsoleColor.White);
+            Helpers.SetOut("Keep in mind to rescale appropriately",110, 22, ConsoleColor.White);
+            ParseInt((a) => { Config.ParkPerRow = a; }, 500);
+            Helpers.SetOut("Welcome To parkinglot, press any key", 110, 22, ConsoleColor.White);
+            Helpers.SetOut("Remember to resize and scale back the console window using [ctrl] + [mousescroll back]", 110, 22, ConsoleColor.Green);
+            Console.ReadKey();
+            Console.Clear();
+        }
+       private void ParseInt(Action<int> a, int max)
+       {
+            string output = "";
+            int res = 0;
+            while(output != "end")
+            {
+                string? input = Helpers.StandardIn(ConsoleColor.White);
+                if(input == "")
+                {
+                    output = "end";
+                    continue;
+                }
+                else if(int.TryParse(input, out res) && res < max)
+                {
+                    a(res);
+                    output = "end";
+                    continue;
+                }
+                NotAccepted(input);
+            }
+       }
        private void Remove()
        {
             var res = GetRegRemove();
@@ -93,7 +131,6 @@ namespace Parking
                     x += 32;
                 }
                 Helpers.ClearLastOutPut(x, y, Helpers.SetOutPuts(item));
-                Thread.Sleep(5);
             }
        }
        private void FreeParking(IParked parked)
@@ -104,8 +141,9 @@ namespace Parking
        private void GetPaid(IParked parked)
         {
             var time = parked.EndParking();
-            string construct = $"you parked for{time.Minutes}: {time.Seconds}," +
-                $"the price will be{(time.Minutes * 60 + time.Seconds) * 2.5}kr";
+            string construct = $"you parked for: {time.Minutes}minutes : {time.Seconds}s," +
+                $"the price will be{((time.Minutes * 60 + time.Seconds) * 2.5 * 
+                ((parked.Vehicle.Size == VehicleSize.large) ? 2 : 1))}kr";
             Helpers.StandardWrite(construct, ConsoleColor.DarkGreen);
             Helpers.StandardIn(ConsoleColor.Red);
         }
@@ -191,7 +229,7 @@ namespace Parking
                     res = EnterData(data);
                 }
                 else res = EnterData();
-                if(ParkingLot.IsUnavailable(res.Item3) is not null)
+                if(ParkingLot.IsUnavailable(res.Item3))
                 {
                     Helpers.StandardWrite("We're sadly full", ConsoleColor.Red);
                     Thread.Sleep(1000);
@@ -567,13 +605,13 @@ private T ParseTrans<T>(
             {
                 int i = 0;
                 ParkingRow[] parkingRows = new ParkingRow[Config.RowAmount];
-                SpaceFact[] s = new SpaceFact[Config.RowAmount];
+                SpaceFact[] s = new SpaceFact[Config.ParkPerRow];
                 for(int k =0; k < parkingRows.Length; k++)
                 {
                     parkingRows[k] =
                     new ParkingRow(true, k, ((int)o[1]), ((string)o[0]).ToUpper()[k].ToString(),
                     ((k%2==0) ? (((k + 1 <= parkingRows.Length-1) ? k+1 : -1)) : -1) ,
-                    Config.RowAmount,
+                    Config.ParkPerRow,
                        (s[k] = new SpaceFact(
                            new SpaceFactImp(
                                (int)o[1],

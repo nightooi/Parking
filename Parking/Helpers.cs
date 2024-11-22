@@ -12,7 +12,7 @@ namespace Parking
     {
         public static int RowAmount { get; set; } = 7;
         public static int ParkPerRow { get; set; } = 11;
-        public static int YOffSet => Config.RowAmount * 2 + Config.RowAmount;
+        public static int YOffSet => Config.ParkPerRow * 3;
         public static int XOutOffset => Config.RowAmount / 2 * 17 + Config.RowAmount / 2 +5;
     }
 
@@ -58,25 +58,25 @@ namespace Parking
         {
             int y = 10+Config.YOffSet;
             y += ClearQue.Count;
-            ClearQue.Enqueue((110, y, message.Length));
-            Console.SetCursorPosition(110, y);
+            ClearQue.Enqueue((Config.XOutOffset+8, y, message.Length));
+            Console.SetCursorPosition(Config.XOutOffset+8, y);
             Console.ForegroundColor = color;
             Console.WriteLine(message);
             Console.ForegroundColor = ConsoleColor.White;
         }
         public static void StandardWrite(string message, ConsoleColor color)
         {
-            Console.SetCursorPosition(110, Config.YOffSet+5);
+            Console.SetCursorPosition(Config.XOutOffset+5, Config.YOffSet+5);
             Console.Write("                                                               ");
-            Console.SetCursorPosition(110, Config.YOffSet+5);
+            Console.SetCursorPosition(Config.XOutOffset+5, Config.YOffSet+5);
             Console.Write(message);
         }
         public static string StandardIn(ConsoleColor color)
         {
-            Console.SetCursorPosition(120, Config.YOffSet+7);
+            Console.SetCursorPosition(Config.XOutOffset+5, Config.YOffSet+7);
             Console.ForegroundColor = color;
             string message = Console.ReadLine();
-            Helpers.ClearLastOutPut(120, Config.YOffSet+7, message);
+            Helpers.ClearLastOutPut(Config.XOutOffset+5, Config.YOffSet+7, message);
             return message.ToUpper();
         }
         public static void ClearLastOutPut(int x, int y, string output)

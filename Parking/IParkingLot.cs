@@ -1,9 +1,11 @@
 ﻿
+using Parking;
 using Parking.Instantiations;
 
 using System.Collections;
 using System.ComponentModel.Design;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 
 //To be Generic constraint definer.
 public interface IParkingLotOptimizer
@@ -21,7 +23,7 @@ public interface IParkingLot
     public IEnumerable<IParkingSpace>? ClearParking();
     public bool HasOpposing(int row);
     public IParkingRow[] OpposingPairs();
-    VehicleSize? IsUnavailable(VehicleSize size);
+    public bool IsUnavailable(VehicleSize size);
 }
 
 // so there are multiple way to implement this, but this type really needs a 
@@ -37,9 +39,7 @@ internal class Parkinglot : IParkingLot
         this._unavailable = new List<VehicleSize>();
         this.rows = rowfactory.Create().ToArray();
         this.opposing = new List<IParkingRow>(rows.Count);
-        this.NextSpotLarge = new Stack<IParkingSpace>();
-        this.NextSpotMedium = new Stack<IParkingSpace>();
-        this.NextSpotSmall = new Stack<IParkingSpace>();
+        this.NextSpot = new();
         this.opposing = PopulateOpposing().ToArray();
         SimpleSync();
    }
@@ -48,9 +48,7 @@ internal class Parkinglot : IParkingLot
     IList<IParkingRow> opposing;
     //Hash => row, parking
     //implement a double parkingspace for easier management?
-    Stack<IParkingSpace> NextSpotLarge;
-    Stack<IParkingSpace> NextSpotMedium;
-    Stack<IParkingSpace> NextSpotSmall;
+    List<IParkingSpace> NextSpot;
 
     private IList<VehicleSize>_unavailable;
     public IReadOnlyList<VehicleSize> UnavailableFor { get => 
@@ -71,9 +69,7 @@ internal class Parkinglot : IParkingLot
     }
     private void SimpleSync()
     {
-        PopulateLargeParkingStack();
         PopulateNormalParkingStack();
-        PopulateSmallParkingStack();
     }
     private IEnumerable<IParkingRow> PopulateOpposing()
     {
@@ -88,46 +84,70 @@ internal class Parkinglot : IParkingLot
     private IParkingSpace HandleSmall()
     {
         IParkingSpace res;
-        if(NextSpotSmall.Peek().Status == Occupied.Free)
-        {
-            (res = NextSpotSmall.Peek()).Status = Occupied.Half;
-        }
-        else if((res =NextSpotSmall.Peek()).Status == Occupied.Half)
+        res = NextSpot.FirstOrDefault(x => x.Status == Occupied.Half);
+        if(res is not null)
         {
             res.Status = Occupied.Full;
+            NextSpot.Remove(res);
+            return res;
         }
-        this.CheckAvailibilit();
+        res = NextSpot.First(x => x.Status == Occupied.Free);
+        res.Status = Occupied.Half;
         return res;
+    }
+    private void CheckAvailibility()
+    {
+        IParkingSpace? space;
+        space = NextSpot.FirstOrDefault(
+        x => opposing.Any(y => y.Contains(x) &&
+            x.Status == Occupied.Free
+            && GetOpposing(x).Status == Occupied.Free)
+        &&!_unavailable.Contains(VehicleSize.large));
+        if (space is null) _unavailable.Add(VehicleSize.large);
+
+            space = NextSpot.FirstOrDefault(x => x.Status == Occupied.Free);
+        if (space is null) _unavailable.Add(VehicleSize.normal);
+
+            space = NextSpot.FirstOrDefault(x => x.Status == Occupied.Free || x.Status ==Occupied.Half);
+        if (space is null) _unavailable.Add(VehicleSize.small);
+
     }
     private IParkingSpace HandleMedium()
     {
         IParkingSpace res;
-        if(NextSpotMedium.Peek().Status == Occupied.Free)
+        if (NextSpot.First().Status == Occupied.Free)
         {
-            (res =NextSpotMedium.Peek()).Status = Occupied.Full;
-            this.CheckAvailibilit();
+            NextSpot.First().Status = Occupied.Full;
+            res = NextSpot.First();
+            NextSpot.Remove(res);
             return res;
         }
-        return HandleMedium();
+        return Taken();
+    }
+    private IParkingSpace Taken()
+    {
+        IParkingSpace space = NextSpot.First(x => x.Status == Occupied.Free);
+        space.Status = Occupied.Full;
+        NextSpot.Remove(space);
+        return space;
     }
     private IParkingSpace HandleLarge()
     {
+        return TakenLarge();
+    }
+    private IParkingSpace TakenLarge()
+    {
         IParkingSpace space;
         IParkingSpace oppSpace;
-        if ((space = NextSpotLarge.Peek()).Status != Occupied.Free
-            || (oppSpace = GetOpposing(space)).Status != Occupied.Free)
-        {
-            NextSpotLarge.Pop();
-        }
-        else if(NextSpotLarge.Peek().Status == Occupied.Free 
-            && GetOpposing(space).Status == Occupied.Free)
-        {
-            GetOpposing(space = NextSpotLarge.Peek()).Status = Occupied.Full;
-            space.Status = Occupied.Full;
-            CheckAvailibilit();
-            return space;
-        }
-        return HandleLarge();
+        (space = NextSpot.First(
+            x => opposing.Any(y => y.Contains(x) &&
+        x.Status == Occupied.Free
+        && GetOpposing(x).Status == Occupied.Free))).Status = Occupied.Free;
+        (oppSpace = GetOpposing(space)).Status = Occupied.Full;
+        space.Status = Occupied.Full;
+        NextSpot.Remove(space);
+        NextSpot.Remove(oppSpace);
+        return space;
     }
     private IParkingSpace GetOpposing(IParkingSpace space)
     {
@@ -135,110 +155,23 @@ internal class Parkinglot : IParkingLot
         int i = ++res.Item1;
         return this.rows[i][res.Item2];
     }
-    private void PopulateSmallParkingStack()
-    {
-        foreach(var row in rows)
-        {
-            for(int i =row.Count-1; i >= 0; i--)
-            {
-               IParkingSpace space;
-                if (((space = row[i]).Status == Occupied.Half
-                    || space.Status == Occupied.Free)
-                    && !NextSpotSmall.Contains(space))
-                {
-                    NextSpotSmall.Push(space);
-                    RemoveUnavailable(VehicleSize.small);
-                } 
-            }
-        }
-        var res = NextSpotSmall.ToArray();
-        Array.Sort(res);
-        NextSpotSmall = new(res);
-    }
-    private void PopulateLargeParkingStack()
-    {
-        for(int i = this.opposing.Count-1; i >= 0; i--)
-        {
-            for(int k = opposing[i].TotalSpaces-1; k >= 0; k--)
-            {
-                int cOpp = opposing[i].OpposingRow;
-                if ((opposing[i][k].Status | rows[cOpp][k].Status) == Occupied.Free
-                    && !NextSpotLarge.Contains(opposing[i][k]))
-                {
-                    NextSpotLarge.Push(opposing[i][k]);
-                    RemoveUnavailable(VehicleSize.large);
-                }
-            }
-        }
-        var res =NextSpotLarge.ToArray();
-        Array.Sort(res);
-        NextSpotLarge = new(res);
-    }
     private void PopulateNormalParkingStack()
     {
-        foreach(var row in rows)
+        CompareByUID comp = new();
+        for(int k =0; k < rows.Count; k++)
         {
-            for(int i = row.TotalSpaces-1; i >= 0; i--)
+            for(int i = rows[k].TotalSpaces-1; i >= 0; i--)
             {
-                if (row.GetParking(i).Status == Occupied.Free
-                    && !NextSpotMedium.Contains(row.GetParking(i)))
+                if (Array.BinarySearch(NextSpot.ToArray(), rows[k].GetParking(i), comp) < 0 &&
+                    rows[k].GetParking(i).Status == Occupied.Free ||
+                    rows[k].GetParking(i).Status == Occupied.Half)
                 {
-                    NextSpotMedium.Push(row.GetParking(i));
-                    RemoveUnavailable(VehicleSize.normal);
+                    NextSpot.Add(rows[k].GetParking(i));
+                    _unavailable.Clear();
                 }
             }
         }
-        var res = NextSpotMedium.ToArray();
-        Array.Sort(res);
-        NextSpotMedium = new Stack<IParkingSpace>(res);
-    }
-    private void RemoveUnavailable(VehicleSize size)
-    {
-        int[] where = new int[_unavailable.Count];
-        for(int i = _unavailable.Count -1; i >= 0; i --)
-        {
-            if (_unavailable[i] == size)
-            {
-                where[i] = i;
-            }
-        }
-        for(int i = where.Length-1; i >= 0; i--)
-        {
-            _unavailable.RemoveAt(i);
-        }
-    }
-    private void CheckAvailibilit()
-    {
-        List<IParkingSpace> cache = new();
-        while(NextSpotSmall.Count > 0 &&
-            !(NextSpotSmall.Peek().Status == Occupied.Free))
-        {
-            if(NextSpotSmall.Peek().Status == Occupied.Half)
-            {
-                cache.Add(NextSpotSmall.Pop());
-                continue;
-            }
-            NextSpotSmall.Pop();
-        }
-        for(int i = cache.Count-1; i >= 0; i--)
-        {
-            NextSpotSmall.Push(cache[i]);
-        }
-        UpdateOther(NextSpotMedium);
-        while(NextSpotLarge.Count > 0 && 
-            NextSpotLarge.Peek().Status != Occupied.Free
-            || GetOpposing(NextSpotLarge.Peek()).Status != Occupied.Free)
-        {
-            NextSpotLarge.Pop();
-        }
-    }
-    private void UpdateOther(Stack<IParkingSpace> stack)
-    {
-        while(stack.Count > 0 && 
-            stack.Peek().Status != Occupied.Free)
-        {
-            stack.Pop();
-        }
+        NextSpot.Sort();
     }
     private IEnumerable<IParkingRow> FindLargeParkingSpace()
     {
@@ -264,37 +197,10 @@ internal class Parkinglot : IParkingLot
     {
         return ResolveAppropriateSpaces(vehicle.Size);
     }
-    public VehicleSize? IsUnavailable(VehicleSize size)
+    public bool IsUnavailable(VehicleSize size)
     {
-        if (_unavailable.Contains(size))
-        {
-            return size;
-        }
-        switch (size)
-        {
-            case VehicleSize.large:
-                if( NextSpotLarge.Count < 1)
-                {
-                    _unavailable.Add(VehicleSize.large);
-                    return VehicleSize.large;
-                }
-                break;
-            case VehicleSize.normal:
-                if (NextSpotMedium.Count < 1) 
-                {
-                    _unavailable.Add(VehicleSize.normal);
-                    return VehicleSize.normal;
-                }
-                break;
-            case VehicleSize.small:
-                if (NextSpotSmall.Count < 1 )
-                {
-                    _unavailable.Add(VehicleSize.small);
-                    return VehicleSize.small;
-                }
-                break;
-        }
-        return null;
+        CheckAvailibility();
+        return _unavailable.Contains(size);
     }
     /// <summary>
     /// Clears Parking of all Vehicles!
@@ -320,9 +226,7 @@ internal class Parkinglot : IParkingLot
     {
         var res = UIDToPos.UIdToPos(uId);
         rows[res.Item1][res.Item2].Status = status ??= Occupied.Free;
-        PopulateLargeParkingStack();
         PopulateNormalParkingStack();
-        PopulateSmallParkingStack();
     }
     //first and second element tied together as a pair.
     public IParkingRow[] OpposingPairs()
@@ -358,14 +262,17 @@ internal class Parkinglot : IParkingLot
             var opp =GetOpposing(space);
             FreeSpot(opp.UId, null);
             FreeSpot(space.UId, null);
+            return;
         }
         else if(vehicle.Size == VehicleSize.small && space.Status == Occupied.Half)
         {
             FreeSpot(space);
+            return;
         }
         else if (vehicle.Size == VehicleSize.small && space.Status == Occupied.Full)
         {
             FreeSpot(space.UId, Occupied.Half);
+            return;
         }
         FreeSpot(space.UId,null);
     }
@@ -398,13 +305,27 @@ public static class UIDToPos
 }
 
 
+public class ParkingStringComparer : IComparer<IParkingSpace>, IComparer
+{
+    public int Compare(IParkingSpace? x, IParkingSpace? y)
+    {
+        if(x is not null && y is not null)
+        {
+            return x.UId.CompareTo(y.UId);
+        }
+        if(x is null && y is not null)
+        {
+            return -1;
+        }
+        if(x is not null)
+        {
+            return 1;
+        }
+        return 0;
+    }
 
-
-
-
-
-
-
-
-
-
+    public int Compare(object? x, object? y)
+    {
+        return Compare((IParkingSpace)x, (IParkingSpace)y);
+    }
+}
