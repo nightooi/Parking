@@ -5,10 +5,10 @@ public interface ISimpleFactory<T, U> where T : IFactory<U>
     public T Factory { get; }
     public U Create()
     {
-        return Factory.Imp.Invoke(Factory.parameters);
+        return Factory.Imp(Factory.parameters);
     }
     public U Create(params object[] parameters)
     {
-        return Factory.Imp.Invoke(new[] { parameters, Factory.parameters });
+        return Factory.Imp(new[] { parameters, Factory.parameters });
     }
 }

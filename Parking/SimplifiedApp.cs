@@ -7,7 +7,7 @@ namespace Parking
 {
     public class SimplifiedApp
     {
-        Random random = new Random();
+       Random random = new Random();
        IParkingLot ParkingLot { get; set; }
        IList<IParked> Parked { get; set; }
        public SimplifiedApp()
@@ -580,7 +580,6 @@ private T ParseTrans<T>(
             };
         }
     }
-
     public class SimpleParkingLotFactory : ISimpleFactory<IFactory<IEnumerable<IParkingRow>>, IEnumerable<IParkingRow>>
     {
         IFactory<IEnumerable<IParkingRow>> _factory;
@@ -605,19 +604,21 @@ private T ParseTrans<T>(
             {
                 int i = 0;
                 ParkingRow[] parkingRows = new ParkingRow[Config.RowAmount];
-                SpaceFact[] s = new SpaceFact[Config.ParkPerRow];
                 for(int k =0; k < parkingRows.Length; k++)
                 {
                     parkingRows[k] =
                     new ParkingRow(true, k, ((int)o[1]), ((string)o[0]).ToUpper()[k].ToString(),
                     ((k%2==0) ? (((k + 1 <= parkingRows.Length-1) ? k+1 : -1)) : -1) ,
-                    Config.ParkPerRow,
-                       (s[k] = new SpaceFact(
+                    ((int)o[1]),
+                       (new SpaceFact(
                            new SpaceFactImp(
                                (int)o[1],
                                ((string)o[0])
                                .ToUpper()[k]
-                               .ToString()))));
+                               .ToString())
+                           )
+                       )
+                    );
                 }
                 return parkingRows;
             };
@@ -627,7 +628,6 @@ private T ParseTrans<T>(
             return ["abcdefghijklmnopqrstuvwxyz", Config.ParkPerRow, true];
         }
     }
-
     public class SpaceFact : ISimpleFactory<IFactory<IEnumerable<IParkingSpace>>,
                              IEnumerable<IParkingSpace>>
     {
@@ -639,7 +639,6 @@ private T ParseTrans<T>(
             _factory = fact;
         }
     }
-
     public class SpaceFactImp : IFactory<IEnumerable<IParkingSpace>>
     {
         object[] _params;
